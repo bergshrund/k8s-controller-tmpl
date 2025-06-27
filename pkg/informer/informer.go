@@ -5,12 +5,15 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
+
+var deploymentInformer cache.SharedIndexInformer
 
 func StartInformer(ctx context.Context, clientset *kubernetes.Clientset, namespace string) {
 	factory := informers.NewSharedInformerFactoryWithOptions(
@@ -22,9 +25,9 @@ func StartInformer(ctx context.Context, clientset *kubernetes.Clientset, namespa
 		}),
 	)
 
-	informer := factory.Apps().V1().Deployments().Informer()
+	deploymentInformer = factory.Apps().V1().Deployments().Informer()
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	deploymentInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			log.Info().Msgf("Deployment added: %s", getDeploymentName(obj))
 		},
@@ -53,4 +56,17 @@ func getDeploymentName(obj any) string {
 		return d.GetName()
 	}
 	return "unknown"
+}
+
+func GetDeploymentNames() []string {
+	var names []string
+	if deploymentInformer == nil {
+		return names
+	}
+	for _, obj := range deploymentInformer.GetStore().List() {
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			names = append(names, d.Name)
+		}
+	}
+	return names
 }
