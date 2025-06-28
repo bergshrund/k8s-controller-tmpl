@@ -22,9 +22,11 @@ import (
 )
 
 var (
-	serverPort          int
-	inClusterConfigFlag bool = false
-	metricsPort         int
+	serverPort              int
+	inClusterConfigFlag     bool = false
+	metricsPort             int
+	enableLeaderElection    bool
+	leaderElectionNamespace string
 )
 
 // serverCmd represents the server command
@@ -48,7 +50,10 @@ var serverCmd = &cobra.Command{
 		managedNamespace[namespace] = cache.Config{}
 
 		controllerManager, err := runtime.NewManager(runtime.GetConfigOrDie(), runtime.Options{
-			Metrics: server.Options{BindAddress: fmt.Sprintf(":%d", metricsPort)},
+			LeaderElection:          enableLeaderElection,
+			LeaderElectionID:        "k8s-controller-tmpl-leader-election",
+			LeaderElectionNamespace: leaderElectionNamespace,
+			Metrics:                 server.Options{BindAddress: fmt.Sprintf(":%d", metricsPort)},
 			Cache: cache.Options{
 				DefaultNamespaces: managedNamespace,
 			},
@@ -131,4 +136,6 @@ func init() {
 	serverCmd.Flags().StringVar(&namespace, "namespace", "default", "Kubernetes namespace")
 	serverCmd.Flags().BoolVar(&inClusterConfigFlag, "in-cluster", false, "Use in-cluster Kubernetes config")
 	serverCmd.Flags().IntVar(&metricsPort, "metrics-port", 8081, "Port for controller manager metrics")
+	serverCmd.Flags().BoolVar(&enableLeaderElection, "enable-leader-election", true, "Enable leader election for controller manager")
+	serverCmd.Flags().StringVar(&leaderElectionNamespace, "leader-election-namespace", "default", "Namespace for leader election")
 }
