@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"k8s-controller-tmpl/pkg/api"
 	"k8s-controller-tmpl/pkg/controller"
 	"k8s-controller-tmpl/pkg/informer"
 
@@ -121,6 +122,13 @@ var serverCmd = &cobra.Command{
 			})
 		})
 
+		frontendAPI := &api.FrontendPageAPI{
+			K8sClient: controllerManager.GetClient(),
+			Namespace: namespace,
+		}
+
+		router.GET("/api/frontendpages", frontendAPI.ListFrontendPages)
+
 		router.GET("/deployments", func(c *gin.Context) {
 			deployments := informer.GetDeploymentNames()
 
@@ -132,6 +140,17 @@ var serverCmd = &cobra.Command{
 			c.JSON(http.StatusOK, gin.H{
 				"status":      "ok",
 				"deployments": deployments,
+			})
+		})
+
+		router.GET("/healthz", func(c *gin.Context) {
+			requestID, _ := c.Get("X-Request-ID")
+
+			logger := log.With().Str("request_id", requestID.(string)).Logger()
+			logger.Info().Msgf("Health check")
+
+			c.JSON(http.StatusOK, gin.H{
+				"status": "ok",
 			})
 		})
 
