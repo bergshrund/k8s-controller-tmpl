@@ -1,0 +1,59 @@
+name: k8s-controller ci/cd
+
+on:
+    pull_request:
+        branches: [ "main" ]
+        paths-ignore:
+          - 'helm/**'
+          - '.github/workflows/**'
+    push:
+        branches: [ "main" ]
+        paths-ignore:
+          - 'helm/**'
+          - '.github/workflows/**'
+        tags: [ 'v*.*.*' ]
+        
+    workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  # github.repository has <account>/<repo> form
+  IMAGE_NAME: k8s-controller
+  CHART_NAME: k8s-controller
+  HELM_REPO: helm-repo
+
+jobs:
+    ci:
+        name: CI
+        runs-on: ubuntu-latest
+        permissions:
+          contents: read
+          packages: write
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+            with:
+              fetch-depth: 0
+          - name: Set up Go
+            uses: actions/setup-go@v5
+            with:
+                go-version: '1.21.3'
+          - run: |
+              if [[ $GITHUB_REF == refs/tags/* ]]; then
+                VERSION=${GITHUB_REF#refs/tags/}
+                APP_VERSION=${VERSION}
+                DOCKER_TAG=${VERSION}
+              else
+                SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-8)
+                VERSION="0.1.0+${GITHUB_SHA}"
+                APP_VERSION=${GITHUB_SHA}
+                DOCKER_TAG="0.1.0-${SHORT_SHA}"
+              fi
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+              echo "docker_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+          - name: Build
+            run: make build
+          - name: Test
+            run: make test
+        
