@@ -24,7 +24,7 @@ format:
 	gofmt -s -w ./
 
 lint:
-	golint
+	go vet ./...
 
 envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
 $(ENVTEST): $(LOCALBIN)
