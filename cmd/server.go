@@ -46,5 +46,5 @@ var serverCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-	serverCmd.PersistentFlags().IntVar(&serverPort, "port", 8080, "Port to run the server on")
+	serverCmd.Flags().IntVar(&serverPort, "port", 8080, "Port to run the server on")
 }
