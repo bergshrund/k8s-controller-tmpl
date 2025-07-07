@@ -33,6 +33,9 @@ $(ENVTEST): $(LOCALBIN)
 build:
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(BUILD_FLAGS)
 
+test:
+	go test ./...
+
 docker-build:
 	docker build --build-arg VERSION=$(VERSION) -t ${REGISTRY}/${BINARY_NAME}:${VERSION}-${TARGETOS}-${TARGETARCH} .
 
