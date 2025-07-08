@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -42,12 +43,28 @@ var serverCmd = &cobra.Command{
 		log.Info().Msgf("Starting server on port %s", addr)
 
 		router := gin.Default()
+		router.Use(gin.Recovery())
+		router.Use(requestID())
 
 		router.NoRoute(func(c *gin.Context) {
 			c.JSON(http.StatusNotImplemented, gin.H{
 				"error":  "Endpoint not implemented",
 				"path":   c.Request.URL.Path,
 				"method": c.Request.Method,
+			})
+		})
+
+		router.GET("/deployments", func(c *gin.Context) {
+			deployments := informer.GetDeploymentNames()
+
+			requestID, _ := c.Get("X-Request-ID")
+
+			logger := log.With().Str("request_id", requestID.(string)).Logger()
+			logger.Info().Msgf("Deployments: %v", deployments)
+
+			c.JSON(http.StatusOK, gin.H{
+				"status":      "ok",
+				"deployments": deployments,
 			})
 		})
 
@@ -58,6 +75,20 @@ var serverCmd = &cobra.Command{
 
 		http.ListenAndServe(addr, router)
 	},
+}
+
+func requestID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestID := c.GetHeader("X-Request-ID")
+
+		if requestID == "" {
+			requestID = uuid.New().String()
+		}
+
+		c.Set("X-Request-ID", requestID)
+		c.Writer.Header().Set("X-Request-ID", requestID)
+		c.Next()
+	}
 }
 
 func init() {
