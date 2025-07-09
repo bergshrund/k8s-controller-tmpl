@@ -9,17 +9,22 @@ import (
 	"net/http"
 	"os"
 
+	"k8s-controller-tmpl/pkg/controller"
+	"k8s-controller-tmpl/pkg/informer"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-
-	"k8s-controller-tmpl/pkg/informer"
+	runtime "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var (
 	serverPort          int
 	inClusterConfigFlag bool = false
+	metricsPort         int
 )
 
 // serverCmd represents the server command
@@ -38,6 +43,34 @@ var serverCmd = &cobra.Command{
 		}
 
 		go informer.StartInformer(ctx, clientset, namespace)
+
+		managedNamespace := map[string]cache.Config{}
+		managedNamespace[namespace] = cache.Config{}
+
+		controllerManager, err := runtime.NewManager(runtime.GetConfigOrDie(), runtime.Options{
+			Metrics: server.Options{BindAddress: fmt.Sprintf(":%d", metricsPort)},
+			Cache: cache.Options{
+				DefaultNamespaces: managedNamespace,
+			},
+		})
+
+		if err != nil {
+			log.Error().Err(err).Msg("Error creating controller-runtime manager")
+			os.Exit(1)
+		}
+
+		if err := controller.AddDeploymentController(controllerManager); err != nil {
+			log.Error().Err(err).Msg("Failed to add deployment controller")
+			os.Exit(1)
+		}
+
+		go func() {
+			log.Info().Msg("Starting controller-runtime manager...")
+			if err := controllerManager.Start(cmd.Context()); err != nil {
+				log.Error().Err(err).Msg("Error starting controller-runtime manager")
+				os.Exit(1)
+			}
+		}()
 
 		addr := fmt.Sprintf(":%d", serverPort)
 		log.Info().Msgf("Starting server on port %s", addr)
@@ -97,4 +130,5 @@ func init() {
 	serverCmd.Flags().StringVar(&kubeconfig, "kubeconfig", getKubeconfigPath(), "Path to the kubeconfig file")
 	serverCmd.Flags().StringVar(&namespace, "namespace", "default", "Kubernetes namespace")
 	serverCmd.Flags().BoolVar(&inClusterConfigFlag, "in-cluster", false, "Use in-cluster Kubernetes config")
+	serverCmd.Flags().IntVar(&metricsPort, "metrics-port", 8081, "Port for controller manager metrics")
 }
