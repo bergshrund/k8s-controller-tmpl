@@ -12,13 +12,23 @@ import (
 	"k8s-controller-tmpl/pkg/controller"
 	"k8s-controller-tmpl/pkg/informer"
 
+	"github.com/go-logr/zerologr"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	runtime "sigs.k8s.io/controller-runtime"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	controller_runtime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	frontendv1alpha1 "k8s-controller-tmpl/pkg/apis/frontend/v1alpha1"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 var (
@@ -36,6 +46,9 @@ var serverCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		configureLogLevel(getLogLevel(logLevel))
 
+		logf.SetLogger(zap.New(zap.UseDevMode(true)))
+		logf.SetLogger(zerologr.New(&log.Logger))
+
 		ctx := context.Background()
 
 		clientset, err := getKubeClient(kubeconfig)
@@ -49,7 +62,18 @@ var serverCmd = &cobra.Command{
 		managedNamespace := map[string]cache.Config{}
 		managedNamespace[namespace] = cache.Config{}
 
-		controllerManager, err := runtime.NewManager(runtime.GetConfigOrDie(), runtime.Options{
+		scheme := runtime.NewScheme()
+		if err := clientgoscheme.AddToScheme(scheme); err != nil {
+			log.Error().Err(err).Msg("Failed to add client-go scheme")
+			os.Exit(1)
+		}
+		if err := frontendv1alpha1.AddToScheme(scheme); err != nil {
+			log.Error().Err(err).Msg("Failed to add FrontendPage scheme")
+			os.Exit(1)
+		}
+
+		controllerManager, err := controller_runtime.NewManager(controller_runtime.GetConfigOrDie(), manager.Options{
+			Scheme:                  scheme,
 			LeaderElection:          enableLeaderElection,
 			LeaderElectionID:        "k8s-controller-tmpl-leader-election",
 			LeaderElectionNamespace: leaderElectionNamespace,
@@ -66,6 +90,11 @@ var serverCmd = &cobra.Command{
 
 		if err := controller.AddDeploymentController(controllerManager); err != nil {
 			log.Error().Err(err).Msg("Failed to add deployment controller")
+			os.Exit(1)
+		}
+
+		if err := controller.AddFrontendController(controllerManager); err != nil {
+			log.Error().Err(err).Msg("Failed to add frontend controller")
 			os.Exit(1)
 		}
 
