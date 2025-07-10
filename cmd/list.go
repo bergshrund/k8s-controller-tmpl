@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 Andrii Ivanov <bergshrund@gmail.com>
 */
 package cmd
 
@@ -15,8 +15,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -25,7 +25,6 @@ var (
 	namespace  string
 )
 
-// listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Kubernetes resources in the specified namespace",
@@ -61,7 +60,16 @@ func getKubeconfigPath() string {
 }
 
 func getKubeClient(kubeconfig string) (*kubernetes.Clientset, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	var err error
+	var config *rest.Config
+
+	if inClusterConfigFlag {
+		config, err = rest.InClusterConfig()
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+	}
+
 	if err != nil {
 		return nil, err
 	}
