@@ -26,6 +26,9 @@ format:
 lint:
 	go vet ./...
 
+docs:
+	swag init --parseDependency --parseInternal
+
 envtest: $(ENVTEST) ## Download setup-envtest locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	$(call go-install-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest,$(ENVTEST_VERSION))
