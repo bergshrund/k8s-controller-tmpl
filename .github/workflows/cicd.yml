@@ -21,6 +21,8 @@ env:
   IMAGE_NAME: k8s-controller
   CHART_NAME: k8s-controller
   HELM_REPO: helm-repo
+  TARGETOS: linux
+  TARGETARCH: amd64
 
 jobs:
     ci:
@@ -65,4 +67,4 @@ jobs:
               username: ${{ github.actor }}
               password: ${{ secrets.GITHUB_TOKEN }}
           - name: Build Docker image
-            run: make docker-build
+            run: TARGETOS=${{ env.TARGETOS }} TARGETARCH=${{ env.TARGETARCH }} REGISTRY=${{ env.REGISTRY }}/${{ github.repository }} VERSION=${{ steps.vars.outputs.docker_tag }} make docker-build
