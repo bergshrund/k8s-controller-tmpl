@@ -9,12 +9,18 @@ import (
 	"net/http"
 	"os"
 
+	"k8s-controller-tmpl/pkg/api"
 	"k8s-controller-tmpl/pkg/controller"
 	"k8s-controller-tmpl/pkg/informer"
 
 	"github.com/go-logr/zerologr"
 
+	_ "k8s-controller-tmpl/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -121,6 +127,18 @@ var serverCmd = &cobra.Command{
 			})
 		})
 
+		frontendAPI := &api.FrontendPageAPI{
+			K8sClient: controllerManager.GetClient(),
+			Namespace: namespace,
+		}
+
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		router.GET("/api/frontendpages", frontendAPI.ListFrontendPages)
+		router.GET("/api/frontendpages/:name", frontendAPI.GetFrontendPage)
+		router.POST("/api/frontendpages", frontendAPI.CreateFrontendPage)
+		router.PUT("/api/frontendpages/:name", frontendAPI.UpdateFrontendPage)
+		router.DELETE("/api/frontendpages/:name", frontendAPI.DeleteFrontendPage)
+
 		router.GET("/deployments", func(c *gin.Context) {
 			deployments := informer.GetDeploymentNames()
 
@@ -132,6 +150,17 @@ var serverCmd = &cobra.Command{
 			c.JSON(http.StatusOK, gin.H{
 				"status":      "ok",
 				"deployments": deployments,
+			})
+		})
+
+		router.GET("/healthz", func(c *gin.Context) {
+			requestID, _ := c.Get("X-Request-ID")
+
+			logger := log.With().Str("request_id", requestID.(string)).Logger()
+			logger.Info().Msgf("Health check")
+
+			c.JSON(http.StatusOK, gin.H{
+				"status": "ok",
 			})
 		})
 

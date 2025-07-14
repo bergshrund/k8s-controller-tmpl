@@ -53,6 +53,7 @@ func getKubeconfigPath() string {
 	if kubeconfig := os.Getenv("KUBECONFIG"); kubeconfig != "" {
 		return kubeconfig
 	} else if home := homedir.HomeDir(); home != "" {
+		log.Info().Msg("Returning default kubeconfig path")
 		return filepath.Join(home, ".kube", "config")
 	} else {
 		return ""
@@ -67,6 +68,7 @@ func getKubeClient(kubeconfig string) (*kubernetes.Clientset, error) {
 	if inClusterConfigFlag {
 		config, err = rest.InClusterConfig()
 	} else {
+		log.Info().Msgf("Using out-of-cluster kubeconfig: %s", kubeconfig)
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
 
