@@ -17,10 +17,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # github.repository has <account>/<repo> form
   IMAGE_NAME: k8s-controller
   CHART_NAME: k8s-controller
-  HELM_REPO: helm-repo
   TARGETOS: linux
   TARGETARCH: amd64
 
@@ -68,9 +66,11 @@ jobs:
               registry: ${{ env.REGISTRY }} 
               username: ${{ github.actor }}
               password: ${{ secrets.GITHUB_TOKEN }}
-          - name: Build Docker image
+          - name: Build Docker image # github.repository variable has <account>/<repo> form
             run: TARGETOS=${{ env.TARGETOS }} TARGETARCH=${{ env.TARGETARCH }} REGISTRY=${{ env.REGISTRY }}/${{ github.repository }} VERSION=${{ steps.vars.outputs.docker_tag }} make docker-build
           - name: Trivy Scan
             uses: aquasecurity/trivy-action@0.28.0
             with:
               image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
+          - name: Push Docker image
+            run: docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
