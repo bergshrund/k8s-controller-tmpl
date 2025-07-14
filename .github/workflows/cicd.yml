@@ -48,7 +48,7 @@ jobs:
                 APP_VERSION=${VERSION}
                 DOCKER_TAG=${VERSION}
               else
-                SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-8)
+                SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
                 VERSION="0.1.0+${GITHUB_SHA}"
                 APP_VERSION=${GITHUB_SHA}
                 DOCKER_TAG="0.1.0-${SHORT_SHA}"
@@ -70,3 +70,7 @@ jobs:
               password: ${{ secrets.GITHUB_TOKEN }}
           - name: Build Docker image
             run: TARGETOS=${{ env.TARGETOS }} TARGETARCH=${{ env.TARGETARCH }} REGISTRY=${{ env.REGISTRY }}/${{ github.repository }} VERSION=${{ steps.vars.outputs.docker_tag }} make docker-build
+          - name: Trivy Scan
+            uses: aquasecurity/trivy-action@0.28.0
+            with:
+              image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
