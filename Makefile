@@ -1,9 +1,9 @@
 BINARY_NAME := k8s-controller
 VERSION := $(shell git describe --tags --always --dirty)
 BUILD_FLAGS = -v -o $(BINARY_NAME) -ldflags "-X=k8s-controller-tmpl/cmd.appVersion=$(VERSION)"
-TARGETOS = "linux"
-TARGETARCH = "amd64"
-REGISTRY = bergshrund
+TARGETOS ?= linux
+TARGETARCH ?= amd64
+REGISTRY ?= ghcr.io/bergshrund
 
 .PHONY: all build run clean envtest
 
