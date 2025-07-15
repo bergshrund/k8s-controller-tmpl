@@ -29,12 +29,13 @@ jobs:
         name: CI
         runs-on: ubuntu-latest
         permissions:
-          contents: read
+          contents: write
           packages: write
         steps:
           - name: Checkout
             uses: actions/checkout@v4
             with:
+              token: ${{ secrets.GITHUB_TOKEN }}
               fetch-depth: 0
           - name: Set up Go
             uses: actions/setup-go@v5
@@ -50,7 +51,7 @@ jobs:
               else
                 SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
                 VERSION="0.1.0+${GITHUB_SHA}"
-                APP_VERSION=${GITHUB_SHA}
+                APP_VERSION=${SHORT_SHA}
                 DOCKER_TAG="0.1.0-${SHORT_SHA}"
               fi
               echo "version=$VERSION" >> $GITHUB_OUTPUT
