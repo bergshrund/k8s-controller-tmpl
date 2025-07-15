@@ -9,7 +9,8 @@ Step4+: Add http requests logging.
 Step5: makefile, distroless dockerfile, github worflow and initial tests.  
 Step5+:Trivy vulnerabilities check.  
 Step6: k8s.io/client-go to create function to list Kubernetes deployment resources in default namespace. Auth via kubeconfig. add flags for set kubeconfig file. list cli command call function.  
-Step6+: Add create/delete command.  
+Step6+: Add create/delete command.
+Step7: using k8s.io/client-go create list/watch informer for Kubernetes deployment resources. Auth via kubeconfig or in-cluster auth add flags for in-cluster mode. Informer report events in logs. Add envtest unit tests.  
 Step7+: add custom logic function for update/delete events using informers cache search.  
 Step7++: use config to setup informers start configuration.  
 Step8: json api handler to request list deployment resources in informer cache storage.   
@@ -31,32 +32,32 @@ Step15++: 90% test coverage.
 
 ### Example repos:
 
-https://github.com/dereban25/go-kubernetes-controllers
-https://github.com/Sp1tfire88/k8s-controllers
-https://github.com/oleksandr-san/k8s-controller
-https://github.com/vanelin/k8s-controller
-https://github.com/dmytropakki1995/k8s-controllers
-https://github.com/roman-povoroznyk/kubernetes-controller
-https://github.com/egormak/k8s-controller
-https://github.com/alioss/k8s-controller-crash-course
-https://github.com/Michaelcode2/k8s-controller-sample
-https://github.com/roman-povoroznyk/kubernetes-controller
-https://github.com/fataevalex/k8s-controller
-https://github.com/AdamDubnytskyy/k8s-controller
-https://github.com/creativie/k8s-controller
-https://github.com/dolv/k8s-controller-tutorial
-https://github.com/silhouetteUA/k8s-controller
-https://github.com/ibra86/k8s-controller-patterns
-https://github.com/solaris24251/k8s-controller
-https://github.com/e1jefe/k8s-controller
-https://github.com/dliaudan/k8s-controllers-template
-https://github.com/dolv/k8s-controller-tutorial
-https://github.com/MikeBorovik/k8s-controller-tutorial
-https://github.com/thegostev/go-kubernetes-controllers
-https://github.com/HiulnaraPyvovar/k8s-controller-tutorial
-https://github.com/danteprivet/k8s-controller
-https://github.com/dmytropakki1995/k8s-controllers
-https://github.com/JRaver/k8s-controller-tutorial 
+https://github.com/dereban25/go-kubernetes-controllers  
+https://github.com/Sp1tfire88/k8s-controllers  
+https://github.com/oleksandr-san/k8s-controller  
+https://github.com/vanelin/k8s-controller  
+https://github.com/dmytropakki1995/k8s-controllers  
+https://github.com/roman-povoroznyk/kubernetes-controller  
+https://github.com/egormak/k8s-controller  
+https://github.com/alioss/k8s-controller-crash-course  
+https://github.com/Michaelcode2/k8s-controller-sample  
+https://github.com/roman-povoroznyk/kubernetes-controller  
+https://github.com/fataevalex/k8s-controller  
+https://github.com/AdamDubnytskyy/k8s-controller  
+https://github.com/creativie/k8s-controller  
+https://github.com/dolv/k8s-controller-tutorial  
+https://github.com/silhouetteUA/k8s-controller  
+https://github.com/ibra86/k8s-controller-patterns  
+https://github.com/solaris24251/k8s-controller  
+https://github.com/e1jefe/k8s-controller  
+https://github.com/dliaudan/k8s-controllers-template  
+https://github.com/dolv/k8s-controller-tutorial  
+https://github.com/MikeBorovik/k8s-controller-tutorial  
+https://github.com/thegostev/go-kubernetes-controllers  
+https://github.com/HiulnaraPyvovar/k8s-controller-tutorial  
+https://github.com/danteprivet/k8s-controller  
+https://github.com/dmytropakki1995/k8s-controllers  
+https://github.com/JRaver/k8s-controller-tutorial   
 
 ### How to run a controller's Docker container in a Windows environment using git-bash:
 
