@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   registry: "ghcr.io"
-  repository: "bergshrund"
+  repository: "bergshrund/k8s-controller-tmpl"
   tag: "latest"
   pullPolicy: Always
 imagePullSecrets: []
