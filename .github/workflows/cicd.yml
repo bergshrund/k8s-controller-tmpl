@@ -6,11 +6,13 @@ on:
         paths-ignore:
           - 'helm/**'
           - '.github/workflows/**'
+          - 'README.md'
     push:
         branches: [ "main" ]
         paths-ignore:
           - 'helm/**'
           - '.github/workflows/**'
+          - 'README.md'
         tags: [ 'v*.*.*' ]
         
     workflow_dispatch:
@@ -58,6 +60,7 @@ jobs:
             run: make build
           - name: Test
             run: make test
+
           - name: Set up Docker Buildx
             uses: docker/setup-buildx-action@v3
           - name: Log in to GHCR
@@ -66,11 +69,66 @@ jobs:
               registry: ${{ env.REGISTRY }} 
               username: ${{ github.actor }}
               password: ${{ secrets.GITHUB_TOKEN }}
+          
           - name: Build Docker image # github.repository variable has <account>/<repo> form
             run: TARGETOS=${{ env.TARGETOS }} TARGETARCH=${{ env.TARGETARCH }} REGISTRY=${{ env.REGISTRY }}/${{ github.repository }} VERSION=${{ steps.vars.outputs.docker_tag }} make docker-build
+          
           - name: Trivy Scan
             uses: aquasecurity/trivy-action@0.28.0
             with:
               image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
+          
           - name: Push Docker image
             run: docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
+          
+          - name: Read chart version from Chart.yaml
+            uses: mikefarah/yq@master
+            with:
+              cmd: echo "CHART_VERSION=$(yq '.version' helm/k8s-controller/Chart.yaml)" >> $GITHUB_ENV
+
+          - name: Update image tag in values.yaml
+            uses: mikefarah/yq@master
+            env:
+              DOCKER_TAG: ${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
+            with:
+              cmd: yq -i '.image.tag=strenv(DOCKER_TAG)' helm/k8s-controller/values.yaml
+          
+          - name: Update Helm Chart appVersion
+            uses: mikefarah/yq@master
+            env:
+              APP_VERSION: ${{ steps.vars.outputs.app_version }}
+            with:
+              cmd: yq -i '.appVersion=strenv(APP_VERSION)' helm/k8s-controller/Chart.yaml
+
+          - name: Autoincrement current helm chart version
+            id: semver-action
+            if: github.ref == 'refs/tags/*'
+            uses: bergshrund/semver-action@6687a3219fe1c6a8590a73e9e0f06dc9211e73f4
+            with:
+              semver: ${{ env.CHART_VERSION }}
+
+          - name: Update Helm Chart version
+            if: github.ref == 'refs/tags/*'
+            uses: mikefarah/yq@master
+            env:
+              CHART_VERSION: ${{ steps.semver-action.outputs.version }} 
+            with:
+              cmd: yq -i '.version="${{ steps.semver-action.outputs.version }}"' helm/k8s-controller/Chart.yaml
+
+          - run: |
+                git config user.name github-actions
+                git config user.email github-actions@users.noreply.github.com
+                git commit -am "Update Helm chart version: ${CHART_VERSION} appVersion: ${APP_VERSION}"
+                git push origin main
+
+          - name: Package Helm chart
+            run: |
+              helm package helm/k8s-controller --version ${{ env.CHART_VERSION }}
+              mkdir -p chart-artifacts
+              mv k8s-controller-${{ env.CHART_VERSION }}.tgz chart-artifacts/
+
+          - name: Upload Helm chart artifact
+            uses: actions/upload-artifact@v4
+            with:
+              name: helm-chart
+              path: chart-artifacts/ 
