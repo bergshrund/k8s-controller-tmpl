@@ -112,7 +112,7 @@ jobs:
           - name: Autoincrement current helm chart version
             id: semver-action
             if: startsWith(github.ref, 'refs/tags/')
-            uses: ./github/actions/semver-action
+            uses: .github/actions/semver-action
             with:
               semver: ${{ env.CHART_VERSION }}
 
