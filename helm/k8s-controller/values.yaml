@@ -1,23 +1,19 @@
 replicaCount: 1
-
 image:
   registry: "ghcr.io"
   repository: "bergshrund/k8s-controller-tmpl"
-  tag: "latest"
+  tag: "0.1.0-1e06d2c-linux-amd64"
   pullPolicy: Always
 imagePullSecrets: []
-
 serviceAccount:
   create: true
   automount: true
   annotations: {}
   name: "controller-sa"
-
 podAnnotations: {}
 podLabels: {}
-
 podSecurityContext: {}
-  # fsGroup: 2000
+# fsGroup: 2000
 
 securityContext:
   # capabilities:
@@ -26,18 +22,15 @@ securityContext:
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   # runAsUser: 1000
-
 service:
   type: LoadBalancer
   port: 8080
-
 autoscaling:
   enabled: false
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-
 # Additional volumes on the output Deployment definition.
 volumes: []
 volumeMounts: []
