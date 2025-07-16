@@ -58,6 +58,7 @@ jobs:
               echo "version=$VERSION" >> $GITHUB_OUTPUT
               echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
               echo "docker_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+
           - name: Build
             run: make build
           - name: Test
@@ -84,9 +85,10 @@ jobs:
             run: docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
           
           - name: Read chart version from Chart.yaml
+            id: chart-version
             uses: mikefarah/yq@master
             with:
-              cmd: echo "CHART_VERSION=$(yq '.version' helm/k8s-controller/Chart.yaml)" >> $GITHUB_ENV
+              cmd: echo "chart_version=$(yq '.version' helm/k8s-controller/Chart.yaml)" >> $GITHUB_OUTPUT
 
           - name: Update image tag in values.yaml
             uses: mikefarah/yq@master
@@ -107,28 +109,36 @@ jobs:
             if: startsWith(github.ref, 'refs/tags/')
             uses: bergshrund/semver-action@main
             with:
-              semver: ${{ env.CHART_VERSION }}
+              semver: ${{ steps.chart-version.outputs.chart_version }}
 
           - name: Update Helm Chart version
             if: startsWith(github.ref, 'refs/tags/')
-            uses: mikefarah/yq@master
-            env:
-              CHART_VERSION: ${{ steps.semver-action.outputs.version }} 
+            uses: mikefarah/yq@master 
             with:
               cmd: yq -i '.version="${{ steps.semver-action.outputs.version }}"' helm/k8s-controller/Chart.yaml
-          
+
+          - name: Set Chart version
+            id: chart-vars
+            run: |
+              if [[ $GITHUB_REF == refs/tags/* ]]; then
+                CHART_VERSION=${{ steps.semver-action.outputs.version }}
+              else
+                CHART_VERSION=${{ steps.chart-version.outputs.chart_version }}
+              fi
+              echo "chart_version=$CHART_VERSION" >> $GITHUB_OUTPUT
+
           - name: Commit changes
             run: |
               git config user.name github-actions
               git config user.email github-actions@users.noreply.github.com
-              git commit -am "Update Helm chart version: ${CHART_VERSION} appVersion: ${{ steps.vars.outputs.app_version }}"
+              git commit -am "Update Helm chart version: ${{ steps.chart-vars.outputs.chart_version }} appVersion: ${{ steps.vars.outputs.app_version }}"
               git push origin main
 
           - name: Package Helm chart
             run: |
-              helm package helm/k8s-controller --version ${{ env.CHART_VERSION }}
+              helm package helm/k8s-controller --version ${{ steps.chart-vars.outputs.chart_version }} --app-version ${{ steps.vars.outputs.app_version }}
               mkdir -p chart-artifacts
-              mv k8s-controller-${{ env.CHART_VERSION }}.tgz chart-artifacts/
+              mv k8s-controller-${{ steps.chart-vars.outputs.chart_version }}.tgz chart-artifacts/
 
           - name: Upload Helm chart artifact
             uses: actions/upload-artifact@v4
