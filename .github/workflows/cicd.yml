@@ -37,7 +37,7 @@ jobs:
             with:
               token: ${{ secrets.GITHUB_TOKEN }}
               fetch-depth: 0
-              ref: ${{ github.ref_name }}
+              ref: main
           - name: Set up Go
             uses: actions/setup-go@v5
             with:
@@ -122,7 +122,7 @@ jobs:
               git config user.name github-actions
               git config user.email github-actions@users.noreply.github.com
               git commit -am "Update Helm chart version: ${CHART_VERSION} appVersion: ${{ steps.vars.outputs.app_version }}"
-              git push origin ${{ github.ref_name }}
+              git push origin main
 
           - name: Package Helm chart
             run: |
