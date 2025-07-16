@@ -102,19 +102,14 @@ jobs:
             with:
               cmd: yq -i '.appVersion=strenv(APP_VERSION)' helm/k8s-controller/Chart.yaml
 
-          - name: Checkout private action repo
-            uses: actions/checkout@v4
-            with:
-              repository: bergshrund/semver-action
-              token: ${{ secrets.SEMVER_ACTION_PAT }}
-              path: .github/actions/semver-action
-
           - name: Autoincrement current helm chart version
             id: semver-action
             if: startsWith(github.ref, 'refs/tags/')
-            uses: .github/actions/semver-action
+            uses: bergshrund/semver-action@main
             with:
               semver: ${{ env.CHART_VERSION }}
+            env:
+              GITHUB_TOKEN: ${{ secrets.SEMVER_ACTION_PAT }}
 
           - name: Update Helm Chart version
             if: startsWith(github.ref, 'refs/tags/')
