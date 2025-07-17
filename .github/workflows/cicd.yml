@@ -89,12 +89,12 @@ jobs:
           # it runs the command in a bash shell, so $GITHUB_OUTPUT works as expected.
           - name: Read chart version from Chart.yaml
             id: chart-version
-            uses: mikefarah/yq@4.46.1
+            uses: mikefarah/yq@v4
             with:
               cmd: echo "chart_version=$(yq '.version' helm/k8s-controller/Chart.yaml)" >> $GITHUB_OUTPUT
 
           - name: Update image tag in values.yaml
-            uses: mikefarah/yq@4.46.1
+            uses: mikefarah/yq@v4
             env:
               DOCKER_TAG: ${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
             with:
@@ -102,7 +102,7 @@ jobs:
           
           - name: Update Helm Chart appVersion
             if: startsWith(github.ref, 'refs/tags/')
-            uses: mikefarah/yq@4.46.1
+            uses: mikefarah/yq@v4
             env:
               APP_VERSION: ${{ steps.vars.outputs.app_version }}
             with:
@@ -117,7 +117,7 @@ jobs:
 
           - name: Update Helm Chart version
             if: startsWith(github.ref, 'refs/tags/')
-            uses: mikefarah/yq@4.46.1
+            uses: mikefarah/yq@v4
             with:
               cmd: yq -i '.version="${{ steps.semver-action.outputs.version }}"' helm/k8s-controller/Chart.yaml
 
