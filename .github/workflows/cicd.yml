@@ -37,7 +37,6 @@ jobs:
             with:
               token: ${{ secrets.GITHUB_TOKEN }}
               fetch-depth: 0
-              ref: main
 
           - name: Set up Go
             uses: actions/setup-go@v5
@@ -98,6 +97,14 @@ jobs:
           - name: Push Docker image
             run: docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.docker_tag }}-${{ env.TARGETOS }}-${{ env.TARGETARCH }}
           
+          - name: Checkout main branch
+            if: startsWith(github.ref, 'refs/tags/')
+            uses: actions/checkout@v4
+            with:
+              ref: main
+              token: ${{ secrets.GITHUB_TOKEN }}
+              fetch-depth: 0
+
           # This step uses mikefarah/yq to extract the chart version from Chart.yaml
           # and sets it as a GitHub Actions output. Although this is a "uses" step,
           # it runs the command in a bash shell, so $GITHUB_OUTPUT works as expected.
