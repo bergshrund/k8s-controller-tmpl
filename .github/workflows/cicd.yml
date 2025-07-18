@@ -150,8 +150,10 @@ jobs:
             run: |
               git config user.name github-actions
               git config user.email github-actions@users.noreply.github.com
-              git commit -am "Update Helm chart version: ${{ steps.chart-vars.outputs.chart_version }} appVersion: ${{ steps.vars.outputs.app_version }}"
-              git push origin main
+              git diff --quiet || (git commit -am "Update Helm chart version: ${{ steps.chart-vars.outputs.chart_version }} appVersion: ${{ steps.vars.outputs.app_version }}" && git push origin main)
+
+          - name: Helm lint
+            run: helm lint helm/k8s-controller
 
           - name: Package Helm chart
             run: |
@@ -159,8 +161,11 @@ jobs:
               mkdir -p chart-artifacts
               mv k8s-controller-${{ steps.chart-vars.outputs.chart_version }}.tgz chart-artifacts/
 
+          - name: Helm template dry-run
+            run: helm template helm/k8s-controller
+
           - name: Upload Helm chart artifact
             uses: actions/upload-artifact@v4
             with:
               name: helm-chart
-              path: chart-artifacts/ 
+              path: chart-artifacts/
