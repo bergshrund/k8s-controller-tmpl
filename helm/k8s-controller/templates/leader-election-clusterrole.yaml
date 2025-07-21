@@ -1,0 +1,22 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: leader-election-clusterrole
+rules:
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get", "watch", "list", "create", "update", "patch"]
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: leader-election-rolebinding
+  namespace: k8s-controller
+subjects:
+- kind: ServiceAccount
+  name: controller-sa
+  namespace: k8s-controller
+roleRef:
+  kind: ClusterRole
+  name: leader-election-clusterrole
+  apiGroup: rbac.authorization.k8s.io

@@ -34,6 +34,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: {{.Values.image.registry}}/{{ .Values.image.repository }}/{{ .Chart.Name }}:{{ .Values.image.tag }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - server
+            - --in-cluster
           ports:
             - name: api
               containerPort: {{ .Values.service.port }}
