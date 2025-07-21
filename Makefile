@@ -10,7 +10,8 @@ REGISTRY ?= ghcr.io/bergshrund
 all: build
 
 ## Location to install dependencies to
-LOCALBIN ?= $(shell pwd)/bin
+# LOCALBIN ?= $(shell pwd)/bin
+LOCALBIN ?= /tmp/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
