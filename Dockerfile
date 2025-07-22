@@ -8,7 +8,9 @@ RUN apk add --no-cache make build-base
 RUN make build
 
 FROM gcr.io/distroless/static-debian12
+
 WORKDIR /
 COPY --from=builder /app/k8s-controller .
+USER 10001
 EXPOSE 8080
 ENTRYPOINT ["/k8s-controller"]
