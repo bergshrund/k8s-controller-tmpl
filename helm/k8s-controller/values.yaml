@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   registry: "ghcr.io"
   repository: "bergshrund/k8s-controller-tmpl"
-  tag: "v0.1.1-linux-amd64"
+  tag: "v0.1.2-linux-amd64"
   pullPolicy: Always
 imagePullSecrets: []
 serviceAccount:
