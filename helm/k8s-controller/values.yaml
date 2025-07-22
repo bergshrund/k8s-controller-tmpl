@@ -6,7 +6,7 @@ image:
   pullPolicy: Always
 imagePullSecrets: []
 serviceAccount:
-  create: true
+  create: false
   automount: true
   annotations: {}
   name: "controller-sa"
